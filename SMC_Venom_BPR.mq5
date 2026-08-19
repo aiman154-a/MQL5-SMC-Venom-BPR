@@ -103,7 +103,7 @@ int OnInit()
    SetIndexBuffer(3, BearishFVG_Dn, INDICATOR_DATA);
    SetIndexBuffer(4, BPR_Up, INDICATOR_DATA);
    SetIndexBuffer(5, BPR_Dn, INDICATOR_DATA);
-   SetIndexBuffer(6, SignalBuffer, INDICATOR_DRAWING);
+   SetIndexBuffer(6, SignalBuffer, INDICATOR_DATA);
    SetIndexBuffer(7, SignalTypeBuffer, INDICATOR_CALCULATIONS);
    
    //--- Initialize arrays as series
@@ -223,17 +223,17 @@ void DetectFVG(int i, const double &high[], const double &low[], const double &c
    //--- Bullish FVG: Low[i] > High[i+2]
    if(i + 2 < ArraySize(high))
    {
-      if(low[i] > high[i+2])
+      if(Low[i] > high[i+2])
       {
-         double fvgSize = low[i] - high[i+2];
+         double fvgSize = Low[i] - high[i+2];
          if(fvgSize >= minFvgSize)
          {
-            BullishFVG_Up[i] = low[i];
+            BullishFVG_Up[i] = Low[i];
             BullishFVG_Dn[i] = high[i+2];
             
             //--- Draw FVG zone
             if(InpShowFVG)
-               DrawZone(i, high[i+2], low[i], "BullFVG", InpBullFVGColor, InpZoneOpacity);
+               DrawZone(i, high[i+2], Low[i], "BullFVG", InpBullFVGColor, InpZoneOpacity);
          }
       }
    }
@@ -241,17 +241,17 @@ void DetectFVG(int i, const double &high[], const double &low[], const double &c
    //--- Bearish FVG: High[i] < Low[i+2]
    if(i + 2 < ArraySize(low))
    {
-      if(high[i] < low[i+2])
+      if(High[i] < low[i+2])
       {
-         double fvgSize = low[i+2] - high[i];
+         double fvgSize = low[i+2] - High[i];
          if(fvgSize >= minFvgSize)
          {
-            BearishFVG_Up[i] = high[i];
+            BearishFVG_Up[i] = High[i];
             BearishFVG_Dn[i] = low[i+2];
             
             //--- Draw FVG zone
             if(InpShowFVG)
-               DrawZone(i, high[i], low[i+2], "BearFVG", InpBearFVGColor, InpZoneOpacity);
+               DrawZone(i, High[i], low[i+2], "BearFVG", InpBearFVGColor, InpZoneOpacity);
          }
       }
    }
@@ -304,34 +304,34 @@ void DetectBreaker(int i, const datetime &time[], const double &high[], const do
    for(int k = 1; k <= InpSwingLeft; k++)
    {
       if(i + k >= ArraySize(high)) break;
-      if(high[i] <= high[i-k]) { isSwingHigh = false; break; }
+      if(High[i] <= high[i-k]) { isSwingHigh = false; break; }
    }
    for(int k = 1; k <= InpSwingRight; k++)
    {
       if(i - k < 0) { isSwingHigh = false; break; }
-      if(high[i] <= high[i-k]) { isSwingHigh = false; break; }
+      if(High[i] <= high[i-k]) { isSwingHigh = false; break; }
    }
    
    //--- Check Swing Low
    for(int k = 1; k <= InpSwingLeft; k++)
    {
       if(i + k >= ArraySize(low)) break;
-      if(low[i] >= low[i+k]) { isSwingLow = false; break; }
+      if(Low[i] >= low[i+k]) { isSwingLow = false; break; }
    }
    for(int k = 1; k <= InpSwingRight; k++)
    {
       if(i - k < 0) { isSwingLow = false; break; }
-      if(low[i] >= low[i-k]) { isSwingLow = false; break; }
+      if(Low[i] >= low[i-k]) { isSwingLow = false; break; }
    }
    
    //--- Bullish Breaker: last bearish swing before bullish impulse
-   if(isSwingLow && close[i] < open[i])
+   if(isSwingLow && Close[i] < Open[i])
    {
       //--- Check if there was a bullish breakout after this swing
       bool breakoutFound = false;
       for(int k = i - 1; k >= i - InpSwingLeft * 2 && k >= 0; k--)
       {
-         if(high[k] > high[i])
+         if(high[k] > High[i])
          {
             breakoutFound = true;
             break;
@@ -340,18 +340,18 @@ void DetectBreaker(int i, const datetime &time[], const double &high[], const do
       
       if(breakoutFound)
       {
-         DrawZone(i, low[i], high[i], "BullBreaker", InpBreakerColor, InpZoneOpacity);
+         DrawZone(i, Low[i], High[i], "BullBreaker", InpBreakerColor, InpZoneOpacity);
       }
    }
    
    //--- Bearish Breaker: last bullish swing before bearish impulse
-   if(isSwingHigh && close[i] > open[i])
+   if(isSwingHigh && Close[i] > Open[i])
    {
       //--- Check if there was a bearish breakout after this swing
       bool breakoutFound = false;
       for(int k = i - 1; k >= i - InpSwingLeft * 2 && k >= 0; k--)
       {
-         if(low[k] < low[i])
+         if(low[k] < Low[i])
          {
             breakoutFound = true;
             break;
@@ -360,7 +360,7 @@ void DetectBreaker(int i, const datetime &time[], const double &high[], const do
       
       if(breakoutFound)
       {
-         DrawZone(i, low[i], high[i], "BearBreaker", InpBreakerColor, InpZoneOpacity);
+         DrawZone(i, Low[i], High[i], "BearBreaker", InpBreakerColor, InpZoneOpacity);
       }
    }
 }
@@ -390,11 +390,11 @@ void CheckVenomSignal(int i, const datetime &time[], const double &high[], const
    if(i >= 3)
    {
       //--- MSS Up: higher high after lower low
-      if(high[i] > high[i-1] && low[i] > low[i-1] && close[i] > open[i])
+      if(High[i] > high[i-1] && Low[i] > low[i-1] && Close[i] > Open[i])
          mssUp = true;
       
       //--- MSS Down: lower low after higher high
-      if(low[i] < low[i-1] && high[i] < high[i-1] && close[i] < open[i])
+      if(Low[i] < low[i-1] && High[i] < high[i-1] && Close[i] < Open[i])
          mssDown = true;
    }
    
@@ -403,23 +403,23 @@ void CheckVenomSignal(int i, const datetime &time[], const double &high[], const
    
    if(inBullishBPR && mssUp && i != lastSignalBar)
    {
-      SignalBuffer[i] = low[i] - 20 * _Point;
+      SignalBuffer[i] = Low[i] - 20 * _Point;
       SignalTypeBuffer[i] = 1; // BUY
       signalType = "BUY";
       lastSignalBar = i;
       
       SendSignal("BUY", close[i], "BPR", time[i]);
-      DrawArrow(i, low[i] - 20 * _Point, 233, clrLime);
+      DrawArrow(i, Low[i] - 20 * _Point, 233, clrLime);
    }
    else if(inBearishBPR && mssDown && i != lastSignalBar)
    {
-      SignalBuffer[i] = high[i] + 20 * _Point;
+      SignalBuffer[i] = High[i] + 20 * _Point;
       SignalTypeBuffer[i] = -1; // SELL
       signalType = "SELL";
       lastSignalBar = i;
       
       SendSignal("SELL", close[i], "BPR", time[i]);
-      DrawArrow(i, high[i] + 20 * _Point, 234, clrRed);
+      DrawArrow(i, High[i] + 20 * _Point, 234, clrRed);
    }
 }
 
@@ -462,9 +462,9 @@ color ColorToAlpha(color baseColor, int opacityPercent)
 {
    //--- Simple opacity simulation via color blending
    //--- For full alpha support, use ARGB
-   uchar r = (uchar)((GetR(baseColor) * opacityPercent) / 100);
-   uchar g = (uchar)((GetG(baseColor) * opacityPercent) / 100);
-   uchar b = (uchar)((GetB(baseColor) * opacityPercent) / 100);
+   uchar r = (uchar)(((baseColor & 0x0000FF) * opacityPercent) / 100);
+   uchar g = (uchar)(((baseColor >> 8) & 0xFF) * opacityPercent / 100);
+   uchar b = (uchar)(((baseColor >> 16) & 0xFF) * opacityPercent / 100);
    
    return ColorToARGB(r, g, b, 255 - (opacityPercent * 255 / 100));
 }
